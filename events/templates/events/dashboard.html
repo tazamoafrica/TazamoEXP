@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Dashboard - Event Management{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-lg-5">
+    <!-- Header Section - Responsive Layout -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <h1 class="h2 mb-0">
+            <i class="fas fa-tachometer-alt me-2"></i>Organizer Dashboard
+        </h1>
+        <a href="{% url 'create_event' %}" class="btn btn-primary d-flex align-items-center">
+            <i class="fas fa-plus me-2"></i>
+            <span>Create New Event</span>
+        </a>
+    </div>
+    
+    <!-- Stats Cards - Grid Layout -->
+    <div class="row g-3 g-xl-4 mb-4">
+        <!-- Total Events Card -->
+        <div class="col-6 col-md-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center p-3">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-flex mb-3">
+                        <i class="fas fa-calendar-alt fa-2x text-primary"></i>
+                    </div>
+                    <h3 class="card-title h4 mb-1">{{ total_events }}</h3>
+                    <p class="card-text text-muted small mb-0">Total Events</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tickets Sold Card -->
+        <div class="col-6 col-md-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center p-3">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 d-inline-flex mb-3">
+                        <i class="fas fa-ticket-alt fa-2x text-success"></i>
+                    </div>
+                    <h3 class="card-title h4 mb-1">{{ total_tickets_sold }}</h3>
+                    <p class="card-text text-muted small mb-0">Tickets Sold</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Revenue Card -->
+        <div class="col-6 col-md-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center p-3">
+                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 d-inline-flex mb-3">
+                        <i class="fas fa-dollar-sign fa-2x text-warning"></i>
+                    </div>
+                    <h3 class="card-title h4 mb-1">Ksh {{ total_revenue|floatformat:2 }}</h3>
+                    <p class="card-text text-muted small mb-0">Total Revenue</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Average Tickets Card -->
+        <div class="col-6 col-md-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center p-3">
+                    <div class="rounded-circle bg-info bg-opacity-10 p-3 d-inline-flex mb-3">
+                        <i class="fas fa-chart-line fa-2x text-info"></i>
+                    </div>
+                    <h3 class="card-title h4 mb-1">
+                        {% if total_events > 0 %}
+                            {{ total_tickets_sold|div:total_events|floatformat:1 }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </h3>
+                    <p class="card-text text-muted small mb-0">Avg. Tickets/Event</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Events Table Section -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Your Events</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if events %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="py-3">Event</th>
+                                <th class="py-3 d-none d-md-table-cell">Date</th>
+                                <th class="py-3">Price</th>
+                                <th class="py-3 d-none d-lg-table-cell">Tickets</th>
+                                <th class="py-3 d-none d-xl-table-cell">Revenue</th>
+                                <th class="py-3">Status</th>
+                                <th class="py-3 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in events %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center py-2">
+                                            {% if event.image %}
+                                                <img src="{{ event.image.url }}" 
+                                                     alt="{{ event.title }}" 
+                                                     class="rounded me-3" 
+                                                     style="width: 48px; height: 48px; object-fit: cover;">
+                                            {% else %}
+                                                <div class="rounded bg-light me-3 d-flex align-items-center justify-content-center" 
+                                                     style="width: 48px; height: 48px;">
+                                                    <i class="fas fa-calendar-alt text-muted"></i>
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <h6 class="mb-0">{{ event.title }}</h6>
+                                                <small class="text-muted d-block">{{ event.location }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="d-none d-md-table-cell align-middle">
+                                        {{ event.date|date:"M d, Y" }}
+                                    </td>
+                                    <td class="align-middle">
+                                        Ksh {{ event.ticket_price }}
+                                    </td>
+                                    <td class="d-none d-lg-table-cell align-middle">
+                                        <div>{{ event.tickets_sold }}/{{ event.total_tickets }}</div>
+                                        <div class="progress mt-1" style="height: 4px; width: 100px;">
+                                            <div class="progress-bar bg-primary" 
+                                                 style="width: {% widthratio event.tickets_sold event.total_tickets 100 %}%">
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="d-none d-xl-table-cell align-middle">
+                                        Ksh {{ event.tickets_sold|mul:event.ticket_price|floatformat:2 }}
+                                    </td>
+                                    <td class="align-middle">
+                                        {% if event.is_past_event %}
+                                            <span class="badge bg-secondary">Completed</span>
+                                        {% elif event.is_sold_out %}
+                                            <span class="badge bg-danger">Sold Out</span>
+                                        {% elif event.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="align-middle text-end">
+                                        <div class="btn-group">
+                                            <a href="{% url 'event_detail' event.pk %}" 
+                                               class="btn btn-sm btn-outline-primary"
+                                               data-bs-toggle="tooltip"
+                                               title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'edit_event' event.pk %}" 
+                                               class="btn btn-sm btn-outline-secondary"
+                                               data-bs-toggle="tooltip"
+                                               title="Edit Event">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <span class="fa-stack fa-2x">
+                            <i class="fas fa-circle fa-stack-2x text-muted opacity-25"></i>
+                            <i class="fas fa-calendar-alt fa-stack-1x text-muted"></i>
+                        </span>
+                    </div>
+                    <h4 class="text-muted h5">No Events Yet</h4>
+                    <p class="text-muted mb-4">Create your first event to get started!</p>
+                    <a href="{% url 'create_event' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create Event
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,54 @@
+*.log
+ *.pot
+ *.pyc
+ __pycache__/
+ db.sqlite3
+ db.sqlite3-journal
+ .vscode
+ static
+ media
+ env
+ # Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+venv/
+env/
+*/.venv/
+*/env.bak/
+*.egg-info/
+
+# Distribution / packaging
+.Python
+build/
+dist/
+develop-eggs/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg
+*.whl
+.installed.cfg
+*.manifest
+*.spec
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# VS Code
+.vscode/
+
+# OS generated files #
+.DS_Store
+Thumbs.db

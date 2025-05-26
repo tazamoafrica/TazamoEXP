@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Organizer Login - Event Management{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center align-items-center min-vh-75">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h4 class="mb-0"><i class="fas fa-user-lock me-2"></i>Organizer Login</h4>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">
+                                <i class="fas fa-user me-2"></i>Username
+                            </label>
+                            <div class="input-group">
+                                {{ form.username }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.password.id_for_label }}" class="form-label">
+                                <i class="fas fa-lock me-2"></i>Password
+                            </label>
+                            <div class="input-group">
+                                {{ form.password }}
+                            </div>
+                        </div>
+                        
+                        {% if form.errors %}
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                {{ form.errors }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endif %}
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-2 mt-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </button>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <p class="text-muted mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Don't have an account? Contact admin to create an organizer account:
+                        </p>
+                        <a href="https://wa.me/+254111363870" class="btn btn-success">
+                            <i class="fab fa-whatsapp me-2"></i>Chat with Admin
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .min-vh-75 {
+        min-height: 75vh;
+    }
+    
+    .card {
+        transition: transform 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    
+    /* Custom form styling */
+    .form-control {
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        width: 100%;
+        font-size: 1rem;
+        height: 3rem;
+    }
+     .input-group {
+        width: 100%;
+    }
+
+    .btn-success {
+        background-color: #25d366;
+        border-color: #25d366;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+    }
+
+    .btn-success:hover {
+        background-color: #128c7e;
+        border-color: #128c7e;
+        transform: translateY(-2px);
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        border-color: #667eea;
+    }
+     /* Input field hover effect */
+    .form-control:hover {
+        border-color: #667eea;
+    }
+    /* Label styling */
+    .form-label {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .card-body {
+            padding: 2rem !important;
+        }
+    }
+</style>
+{% endblock %}

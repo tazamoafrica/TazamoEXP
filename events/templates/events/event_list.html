@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load form_filters %}
+
+{% block title %}All Events - Event Management{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-lg-5">
+    <!-- Header Section - Responsive Layout -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <h1 class="h2 mb-0"><i class="fas fa-calendar-week me-2"></i> Events</h1>
+        <div class="w-100 w-md-auto">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search events...">
+                <button class="btn btn-outline-primary d-flex align-items-center">
+                    <i class="fas fa-search"></i>
+                    <span class="d-none d-md-inline ms-2">Search</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Events Grid - Responsive Columns -->
+    <div class="row g-3 g-md-4">
+        {% for event in events %}
+            <div class="col-12 col-sm-6 col-lg-4">
+                <div class="card h-100 shadow-sm hover-shadow transition-all">
+                    <!-- Event Image - Responsive Height -->
+                    {% if event.image %}
+                        <img src="{{ event.image.url }}" 
+                             class="card-img-top" 
+                             alt="{{ event.title }}" 
+                             style="height: 180px; height: clamp(180px, 25vw, 220px); object-fit: cover;">
+                    {% else %}
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                             style="height: 180px; height: clamp(180px, 25vw, 220px);">
+                            <i class="fas fa-calendar-alt fa-3x text-muted"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="card-body d-flex flex-column p-3 p-md-4">
+                        <!-- Event Title and Status -->
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <h5 class="card-title mb-0 text-truncate">{{ event.title }}</h5>
+                            {% if event.is_sold_out %}
+                                <span class="badge bg-danger flex-shrink-0">Sold Out</span>
+                            {% else %}
+                                <span class="badge bg-success flex-shrink-0">Available</span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Event Description -->
+                        <p class="card-text text-muted small">{{ event.description|truncatewords:15 }}</p>
+                        
+                        <!-- Event Details -->
+                        <div class="mt-auto">
+                            <div class="list-group list-group-flush mb-3">
+                                <div class="list-group-item border-0 px-0 py-1 d-flex align-items-center">
+                                    <i class="fas fa-calendar-alt text-primary me-2 flex-shrink-0"></i>
+                                    <span class="small">{{ event.date|date:"M d, Y g:i A" }}</span>
+                                </div>
+                                <div class="list-group-item border-0 px-0 py-1 d-flex align-items-center">
+                                    <i class="fas fa-map-marker-alt text-primary me-2 flex-shrink-0"></i>
+                                    <span class="small text-truncate">{{ event.location }}</span>
+                                </div>
+                                <div class="list-group-item border-0 px-0 py-1">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-ticket-alt text-primary me-2 flex-shrink-0"></i>
+                                        <span class="small">
+                                            {% if event.available_tickets > 0 %}
+                                                {{ event.available_tickets }} tickets left
+                                            {% else %}
+                                                <span class="text-danger">Sold Out</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    {% if event.available_tickets > 0 %}
+                                        <div class="progress mt-2" style="height: 4px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" 
+                                                 style="width: {{ event.tickets_sold|divided_by:event.total_tickets|multiply:100 }}%">
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Price and Action Button -->
+                            <div class="d-flex justify-content-between align-items-center gap-3">
+                                <span class="h6 mb-0">
+                                    <i class="fas fa-tag text-primary small"></i>
+                                    <span class="ms-1">Ksh {{ event.ticket_price }}</span>
+                                </span>
+                                <a href="{% url 'event_detail' event.pk %}" 
+                                   class="btn btn-primary btn-sm {% if event.is_sold_out %}disabled{% endif %}">
+                                    {% if event.is_sold_out %}
+                                        <i class="fas fa-ticket-alt me-1"></i> Sold Out
+                                    {% else %}
+                                        <i class="fas fa-shopping-cart me-1"></i> Buy Tickets
+                                    {% endif %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <!-- Empty State - Responsive Padding -->
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-4 py-md-5">
+                        <i class="fas fa-calendar-alt fa-4x text-muted mb-3"></i>
+                        <h3 class="h4 text-muted">No Events Available</h3>
+                        <p class="text-muted mb-4">Check back later for upcoming events!</p>
+                        <a href="{% url 'home' %}" class="btn btn-primary">
+                            <i class="fas fa-home me-1"></i> Return Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .hover-shadow {
+        will-change: transform;
+    }
+    
+    .hover-shadow:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+    
+    .transition-all {
+        transition: all .2s ease-in-out;
+    }
+    
+    @media (max-width: 768px) {
+        .hover-shadow:hover {
+            transform: translateY(-2px);
+        }
+    }
+    
+    .text-truncate {
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
+{% endblock %}

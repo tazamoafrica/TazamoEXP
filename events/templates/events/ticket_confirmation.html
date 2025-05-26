@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Ticket Confirmation{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-body text-center p-4 p-md-5">
+                    <i class="fas fa-check-circle fa-4x text-success mb-4 animate__animated animate__bounceIn"></i>
+                    <h2 class="mb-4 fw-bold">Purchase Successful!</h2>
+                    <p class="lead mb-4">Thank you for your purchase. Your ticket details have been sent to your email.</p>
+                    
+                    <div class="card bg-light mt-4 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title fw-bold mb-4">Ticket Information</h5>
+                            <div class="row g-4">
+                                <div class="col-12 col-md-6">
+                                    <div class="ticket-info">
+                                        <p class="mb-3"><i class="fas fa-calendar-alt me-2 text-primary"></i><strong>Event:</strong> {{ ticket.event.title }}</p>
+                                        <p class="mb-3"><i class="fas fa-clock me-2 text-primary"></i><strong>Date:</strong> {{ ticket.event.date|date:"F d, Y g:i A" }}</p>
+                                        <p class="mb-3"><i class="fas fa-map-marker-alt me-2 text-primary"></i><strong>Location:</strong> {{ ticket.event.location }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div class="ticket-details">
+                                        <p class="mb-3"><i class="fas fa-user me-2 text-primary"></i><strong>Name:</strong> {{ ticket.buyer_name }}</p>
+                                        <p class="mb-3"><i class="fas fa-ticket-alt me-2 text-primary"></i><strong>Quantity:</strong> {{ ticket.quantity }}</p>
+                                        <p class="mb-3"><i class="fas fa-money-bill-wave me-2 text-primary"></i><strong>Total:</strong> ${{ ticket.total_amount }}</p>
+                                        <p class="mb-3"><i class="fas fa-qrcode me-2 text-primary"></i><strong>Ticket Code:</strong> 
+                                            <code class="bg-dark text-light px-2 py-1 rounded">{{ ticket.ticket_code }}</code>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-5">
+                        <a href="{% url 'home' %}" class="btn btn-primary btn-lg me-3 mb-3">
+                            <i class="fas fa-home me-2"></i>Back to Home
+                        </a>
+                        <a href="{% url 'event_list' %}" class="btn btn-outline-primary btn-lg mb-3">
+                            <i class="fas fa-calendar-alt me-2"></i>Browse More Events
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        transition: transform 0.3s ease;
+        border-radius: 1rem;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .ticket-info, .ticket-details {
+        background-color: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        height: 100%;
+    }
+    
+    .btn {
+        transition: all 0.3s ease;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1.5rem;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+    }
+    
+    code {
+        font-size: 1rem;
+        font-family: monospace;
+    }
+    
+    @media (max-width: 768px) {
+        .card-body {
+            padding: 2rem !important;
+        }
+        
+        .btn {
+            width: 100%;
+            margin-right: 0 !important;
+        }
+        
+        .ticket-info, .ticket-details {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}

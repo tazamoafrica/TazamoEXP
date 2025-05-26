@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TazamoExp{% endblock %}</title>
+    
+    <!-- CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --hover-gradient: linear-gradient(45deg, #5a67d8, #6b46c1);
+        }
+
+        /* General Styles */
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        main {
+            flex: 1;
+        }
+
+        /* Navigation Styles */
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+            margin-right: auto;
+        }
+
+        .navbar-dark {
+            background: var(--primary-gradient) !important;
+        }
+
+        /* Dropdown Styles */
+        .dropdown-submenu {
+            position: relative;
+        }
+
+        .dropdown-submenu .dropdown-menu {
+            top: 0;
+            left: 100%;
+            margin-top: -1px;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        }
+
+        .dropdown-item {
+            padding: 0.7rem 1rem;
+            transition: all 0.2s ease;
+        }
+
+
+    /* Dropdown Submenu Styles */
+    .dropdown-submenu {
+        position: relative;
+    }
+
+    /* Dropdown Submenu Styles */
+.dropdown-submenu > .dropdown-menu {
+    position: absolute;
+    left: -300px; /* Change from 100% to negative width */
+    top: 0;
+    margin-top: 0;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    width: 300px; /* Explicit width */
+}
+
+@media (max-width: 768px) {
+    .dropdown-submenu > .dropdown-menu {
+        position: static;
+        left: 0;
+        width: 100%;
+        margin-top: 0.5rem;
+        box-shadow: none;
+    }
+}
+
+        .dropdown-item:hover {
+            background-color: rgba(102, 126, 234, 0.1);
+            transform: translateX(5px);
+        }
+
+        /* Pro Features Badge */
+        .pro-badge {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pro-badge::after {
+            content: 'POPULAR';
+            position: absolute;
+            top: 0.5rem;
+            right: -1rem;
+            background: #ffd700;
+            color: #000;
+            padding: 0.2rem 2rem;
+            transform: rotate(45deg);
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        /* Button & Card Styles */
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            padding: 0.5rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--hover-gradient);
+            transform: translateY(-2px);
+        }
+
+        .event-card {
+            transition: transform 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        /* Sidebar Styles */
+        .offcanvas {
+            width: 280px !important;
+        }
+
+        .offcanvas-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 1rem;
+        }
+
+        .offcanvas-title {
+            font-size: 1.25rem;
+            margin: 0;
+        }
+
+        .btn-close-white {
+            filter: brightness(0) invert(1);
+        }
+
+        .offcanvas-nav .nav-link {
+            padding: 0.8rem 1rem;
+            color: #212529;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            margin-bottom: 0.25rem;
+        }
+
+        .offcanvas-nav .nav-link:hover {
+            background-color: rgba(102, 126, 234, 0.1);
+            transform: translateX(5px);
+        }
+
+        /* Version Info */
+        .version-info {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 280px;
+            padding: 1rem;
+            background: rgba(0,0,0,0.03);
+            border-top: 1px solid rgba(0,0,0,0.1);
+            font-size: 0.875rem;
+            color: #333;
+            text-align: center;
+            z-index: 1030;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .dropdown-submenu .dropdown-menu {
+                left: 0;
+                top: 100%;
+                margin-top: 0;
+                width: 100%;
+            }
+
+            .version-info {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <!-- Sidebar Toggle Button -->
+            <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- Brand Logo -->
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <i class="fas fa-ticket-alt me-2"></i>TazamoEXP
+            </a>
+
+            <!-- Desktop Navigation -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% comment %} <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'event_list' %}">All Events</a>
+                    </li> {% endcomment %}
+                </ul>
+
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i> {{ user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'dashboard' %}">
+                                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'home' %}">
+                                        <i class="fas fa-home me-2"></i>Home
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'event_list' %}">
+                                        <i class="fas fa-calendar-alt me-2"></i>My Events
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'create_event' %}">
+                                        <i class="fas fa-plus-circle me-2"></i>Create Event
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+
+                               <!-- Pro Features Section -->
+<li class="dropdown-submenu">
+    <a class="dropdown-item dropdown-toggle d-flex justify-content-between align-items-center" href="#" role="button">
+        <span>
+            <i class="fas fa-crown me-2 text-warning"></i>TazamoXM
+        </span>
+
+        {% if not user.is_pro %}
+            <span class="badge bg-warning text-dark ms-2">Upgrade</span>
+        {% endif %}
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end p-3" style="width: 300px;">
+        {% if not user.is_pro %}
+
+            <li class="text-center mb-3">
+                <h6 class="mb-1">Upgrade to Pro</h6>
+                <small class="text-muted">Choose your perfect plan</small>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <a class="dropdown-item rounded mb-2" href="{% url 'subscribe' plan='daily' %}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-calendar-day me-2 text-primary"></i>
+                            <strong>Daily Plan</strong>
+                            <div class="small text-muted">Perfect for quick access</div>
+                        </div>
+                        <span class="badge bg-primary">$5/day</span>
+                    </div>
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item rounded mb-2 pro-badge" href="{% url 'subscribe' plan='monthly' %}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-calendar-alt me-2 text-success"></i>
+                            <strong>Monthly Plan</strong>
+                            <div class="small text-muted">Most popular choice</div>
+                        </div>
+                        <span class="badge bg-success">$49/mo</span>
+                    </div>
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item rounded" href="{% url 'subscribe' plan='yearly' %}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-calendar-check me-2 text-danger"></i>
+                            <strong>Yearly Plan</strong>
+                            <div class="small text-muted">Best value (Save 32%)</div>
+                        </div>
+                        <span class="badge bg-danger">$399/yr</span>
+                    </div>
+                </a>
+            </li>
+        {% else %}
+            <li>
+                <a class="dropdown-item rounded mb-2" href="{% url 'pro_features' %}">
+                    <i class="fas fa-star me-2 text-warning"></i>Pro Features
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item rounded" href="{% url 'subscription_settings' %}">
+                    <i class="fas fa-cog me-2"></i>Subscription Settings
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'logout' %}">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">
+                                <i class="fas fa-sign-in-alt me-1"></i> Organizer Login
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Sidebar -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">
+                <i class="fas fa-ticket-alt me-2"></i>TazamoEXP
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="navbar-nav offcanvas-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'home' %}">
+                        <i class="fas fa-home me-2"></i>Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'event_list' %}">
+                        <i class="fas fa-calendar-alt me-2"></i>All Events
+                    </a>
+                </li>
+                {% if user.is_authenticated %}
+                    <li><hr class="nav-divider"></li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'create_event' %}">
+                            <i class="fas fa-plus-circle me-2"></i>Create Event
+                        </a>
+                    </li>
+                    <li><hr class="nav-divider"></li>
+                    <li class="dropdown-submenu">
+    <a class="dropdown-item dropdown-toggle d-flex justify-content-between align-items-center" href="#" role="button">
+        <span>
+            <i class="fas fa-crown me-2 text-warning"></i>TazamoXM
+        </span>
+        {% if not user.is_pro %}
+            <span class="badge bg-warning text-dark ms-2">Upgrade</span>
+        {% endif %}
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end p-3" style="width: 300px;">
+        {% if not user.is_pro %}
+            <li class="text-center mb-3">
+                <h6 class="mb-1">Upgrade to Pro</h6>
+                <small class="text-muted">Choose your perfect plan</small>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <a class="dropdown-item rounded mb-2" href="{% url 'subscribe' plan='daily' %}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-calendar-day me-2 text-primary"></i>
+                            <strong>Daily Plan</strong>
+                            <div class="small text-muted">Perfect for quick access</div>
+                        </div>
+                        <span class="badge bg-primary">$5/day</span>
+                    </div>
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item rounded mb-2 pro-badge" href="{% url 'subscribe' plan='monthly' %}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-calendar-alt me-2 text-success"></i>
+                            <strong>Monthly Plan</strong>
+                            <div class="small text-muted">Most popular choice</div>
+                        </div>
+                        <span class="badge bg-success">$49/mo</span>
+                    </div>
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item rounded" href="{% url 'subscribe' plan='yearly' %}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-calendar-check me-2 text-danger"></i>
+                            <strong>Yearly Plan</strong>
+                            <div class="small text-muted">Best value (Save 32%)</div>
+                        </div>
+                        <span class="badge bg-danger">$399/yr</span>
+                    </div>
+                </a>
+            </li>
+        {% else %}
+            <li>
+                <a class="dropdown-item rounded mb-2" href="{% url 'pro_features' %}">
+                    <i class="fas fa-star me-2 text-warning"></i>Pro Features
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item rounded" href="{% url 'subscription_settings' %}">
+                    <i class="fas fa-cog me-2"></i>Subscription Settings
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</li>
+                     <li><hr class="nav-divider"></li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'logout' %}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        </a>
+                    </li>
+                {% else %}
+                    <li><hr class="nav-divider"></li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">
+                            <i class="fas fa-sign-in-alt me-2"></i>Organizer Login
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% if user.is_authenticated %}
+            <div class="version-info">
+                <small>
+                    <i class="fas fa-code-branch me-1"></i>
+                    Version 1.1.0 - Updated on 2025-05-20
+                </small>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Main Content -->
+    <main>
+        {% if messages %}
+            <div class="container mt-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2025 TazamoEXP. All Rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dropdownSubmenus = document.querySelectorAll('.dropdown-submenu');
+    
+    dropdownSubmenus.forEach(function(submenu) {
+        const toggle = submenu.querySelector('.dropdown-toggle');
+        const menu = submenu.querySelector('.dropdown-menu');
+        
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Close all other submenus
+            dropdownSubmenus.forEach(function(other) {
+                if (other !== submenu) {
+                    other.querySelector('.dropdown-menu').classList.remove('show');
+                }
+            });
+            
+            // Toggle current submenu
+            menu.classList.toggle('show');
+        });
+    });
+    
+    // Close submenus when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown-submenu')) {
+            dropdownSubmenus.forEach(function(submenu) {
+                submenu.querySelector('.dropdown-menu').classList.remove('show');
+            });
+        }
+    });
+});
+</script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

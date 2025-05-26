@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load form_filters %}
+
+{% block title %}{{ event.title }} - Event Management{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row g-4">
+        <!-- Event Image and Description Column -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    {% if event.image %}
+                        <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}" style="object-fit: cover; height: 400px;">
+                    {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center" style="height: 400px;">
+                            <i class="fas fa-calendar-alt fa-5x text-muted"></i>
+                        </div>
+                    {% endif %}
+                    <div class="p-4">
+                        <h1 class="display-5 mb-3">{{ event.title }}</h1>
+                        <div class="mb-4">
+                            <span class="badge bg-primary me-2">
+                                <i class="fas fa-user me-1"></i> Organized by {{ event.organizer.get_full_name|default:event.organizer.username }}
+                            </span>
+                            {% if event.is_past_event %}
+                                <span class="badge bg-secondary">Past Event</span>
+                            {% elif event.is_sold_out %}
+                                <span class="badge bg-danger">Sold Out</span>
+                            {% else %}
+                                <span class="badge bg-success">Tickets Available</span>
+                            {% endif %}
+                        </div>
+                        <p class="lead text-muted">{{ event.description }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Event Details and Booking Column -->
+        <div class="col-lg-4">
+            <div class="card shadow position-sticky" style="top: 2rem;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>Event Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-light rounded-circle p-2 me-3">
+                                <i class="fas fa-calendar text-primary"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Date & Time</h6>
+                                <p class="mb-0">
+                                    {{ event.date|date:"l, F d, Y" }}<br>
+                                    {{ event.date|date:"g:i A" }}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-light rounded-circle p-2 me-3">
+                                <i class="fas fa-map-marker-alt text-primary"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Location</h6>
+                                <p class="mb-0">{{ event.location }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-light rounded-circle p-2 me-3">
+                                <i class="fas fa-tag text-primary"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Price</h6>
+                                <p class="mb-0 h4">Ksh {{ event.ticket_price }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="bg-light rounded-circle p-2 me-3">
+                                <i class="fas fa-ticket-alt text-primary"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Availability</h6>
+                                {% if event.is_sold_out %}
+                                    <span class="badge bg-danger">Sold Out</span>
+                                {% else %}
+                                    <p class="mb-0">{{ event.available_tickets }} tickets remaining</p>
+                                    <div class="progress mt-2" style="height: 6px;">
+                                        <div class="progress-bar" role="progressbar" 
+                                             style="width: {{ event.tickets_sold|divided_by:event.total_tickets|multiply:100 }}%"></div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if not event.is_sold_out and not event.is_past_event %}
+                        <a href="{% url 'checkout' event.pk %}" class="btn btn-primary btn-lg w-100 mb-3">
+                            <i class="fas fa-shopping-cart me-2"></i> Buy Tickets
+                        </a>
+                    {% elif event.is_past_event %}
+                        <button class="btn btn-secondary btn-lg w-100 mb-3" disabled>
+                            <i class="fas fa-clock me-2"></i> Event Has Passed
+                        </button>
+                    {% else %}
+                        <button class="btn btn-danger btn-lg w-100 mb-3" disabled>
+                            <i class="fas fa-ticket-alt me-2"></i> Sold Out
+                        </button>
+                    {% endif %}
+                    
+                    <div class="text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-shield-alt me-1"></i> Secure checkout powered by Stripe
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

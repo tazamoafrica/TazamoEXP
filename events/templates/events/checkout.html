@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load form_filters %}
+
+{% block title %}Checkout - {{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Complete Your Purchase</h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Event Details Section -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            {% if event.image %}
+                                <img src="{{ event.image.url }}" class="img-fluid rounded shadow-sm" alt="{{ event.title }}">
+                            {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center shadow-sm" style="height: 150px;">
+                                    <i class="fas fa-calendar-alt fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <h5 class="fw-bold mb-3">{{ event.title }}</h5>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-calendar text-primary me-2"></i>
+                                <span>{{ event.date|date:"F d, Y g:i A" }}</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                                <span>{{ event.location }}</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-tag text-primary me-2"></i>
+                                <span>Ksh {{ event.ticket_price }} per ticket</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Checkout Form -->
+                    <form id="checkout-form" method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Personal Information -->
+                        <h6 class="fw-bold mb-3"><i class="fas fa-user me-2"></i>Personal Information</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.buyer_name.id_for_label }}" class="form-label">Full Name</label>
+                                {{ form.buyer_name|addclass:"form-control" }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.buyer_email.id_for_label }}" class="form-label">Email Address</label>
+                                {{ form.buyer_email|addclass:"form-control" }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.buyer_phone.id_for_label }}" class="form-label">Phone Number (Optional)</label>
+                                {{ form.buyer_phone|addclass:"form-control" }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label">Number of Tickets</label>
+                                {{ form.quantity|addclass:"form-control" }}
+                            </div>
+                        </div>
+                        
+                        <!-- Order Summary -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3"><i class="fas fa-receipt me-2"></i>Order Summary</h6>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Ticket Price:</span>
+                                    <span>Ksh {{ event.ticket_price }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Quantity:</span>
+                                    <span id="quantity-display">1</span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <strong>Total Amount:</strong>
+                                    <strong class="text-primary" id="total-amount">Ksh {{ event.ticket_price }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Section -->
+                        <h6 class="fw-bold mb-3"><i class="fas fa-credit-card me-2"></i>Payment Information</h6>
+                        <div class="mb-4">
+                            <div id="card-element" class="form-control" style="height: 40px; padding: 10px;"></div>
+                            <div id="card-errors" role="alert" class="text-danger mt-2 small"></div>
+                        </div>
+                        
+                        <button type="submit" id="submit-button" class="btn btn-primary btn-lg w-100">
+                            <span id="button-text">Complete Purchase</span>
+                            <div id="spinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display: none;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        
+                        <div class="text-center mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-lock me-1"></i> Secured by Stripe
+                            </small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if stripe_publishable_key %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    // ...existing Stripe initialization code...
+    const stripe = Stripe('{{ stripe_publishable_key }}');
+    const elements = stripe.elements();
+    
+    const cardElement = elements.create('card');
+    cardElement.mount('#card-element');
+    
+    cardElement.on('change', function(event) {
+        const displayError = document.getElementById('card-errors');
+        if (event.error) {
+            displayError.textContent = event.error.message;
+        } else {
+            displayError.textContent = '';
+        }
+    });
+    // Update the quantity display formatting
+    document.getElementById('id_quantity').addEventListener('change', function() {
+        const quantity = parseInt(this.value);
+        const price = {{ event.ticket_price }};
+        const total = quantity * price;
+        
+        document.getElementById('quantity-display').textContent = quantity;
+        document.getElementById('total-amount').textContent = `Ksh ${total.toFixed(2)}`;
+    });
+    const form = document.getElementById('checkout-form');
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const submitButton = document.getElementById('submit-button');
+            const buttonText = document.getElementById('button-text');
+            const spinner = document.getElementById('spinner');
+            
+            submitButton.disabled = true;
+            buttonText.textContent = 'Processing...';
+            spinner.style.display = 'inline-block';
+            
+            const formData = new FormData(form);
+            
+            try {
+                // Create payment intent
+                const response = await fetch('{% url "checkout" event.pk %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data, 'text/html');
+                    const clientSecret = doc.querySelector('meta[name="client-secret"]');
+                    
+                    if (clientSecret) {
+                        const {error} = await stripe.confirmCardPayment(clientSecret.content, {
+                            payment_method: {
+                                card: cardElement,
+                                billing_details: {
+                                    name: formData.get('buyer_name'),
+                                    email: formData.get('buyer_email'),
+                                }
+                            }
+                        });
+                        
+                        if (error) {
+                            document.getElementById('card-errors').textContent = error.message;
+                            submitButton.disabled = false;
+                            buttonText.textContent = 'Complete Purchase';
+                            spinner.style.display = 'none';
+                        } else {
+                            // Payment succeeded
+                            window.location.href = '/ticket-confirmation/';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('card-errors').textContent = 'An error occurred. Please try again.';
+                submitButton.disabled = false;
+                buttonText.textContent = 'Complete Purchase';
+                spinner.style.display = 'none';
+            }
+        });
+</script>
+{% endif %}
+{% endblock %}

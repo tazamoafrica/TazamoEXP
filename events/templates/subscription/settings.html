@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Subscription Settings - TazamoXM Pro{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <!-- Subscription Status Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-crown text-warning me-2"></i>Current Subscription
+                        </h5>
+                        {% if user.subscription.is_active %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if user.subscription %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted">Plan</p>
+                                <h6>{{ user.subscription.plan|title }} Plan</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted">Status</p>
+                                <h6>{{ user.subscription.status|title }}</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted">Started On</p>
+                                <h6>{{ user.subscription.created_at|date:"F j, Y" }}</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted">Next Billing Date</p>
+                                <h6>{{ user.subscription.expires_at|date:"F j, Y" }}</h6>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="mb-0">You don't have an active subscription.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Payment Method Card -->
+            {% if user.subscription %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-credit-card text-primary me-2"></i>Payment Method
+                    </h5>
+                    <div class="d-flex align-items-center">
+                        <i class="fab fa-cc-visa fa-2x me-3"></i>
+                        <div>
+                            <h6 class="mb-0">•••• •••• •••• {{ user.subscription.last_4 }}</h6>
+                            <small class="text-muted">Expires {{ user.subscription.card_exp_month }}/{{ user.subscription.card_exp_year }}</small>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm ms-auto">Update</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subscription Management -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-cog text-secondary me-2"></i>Subscription Management
+                    </h5>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changePlanModal">
+                            <i class="fas fa-exchange-alt me-2"></i>Change Plan
+                        </button>
+                        <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelSubscriptionModal">
+                            <i class="fas fa-times-circle me-2"></i>Cancel Subscription
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Billing History -->
+            {% if user.subscription %}
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-history text-secondary me-2"></i>Billing History
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Invoice</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in billing_history %}
+                                <tr>
+                                    <td>{{ invoice.date|date:"M j, Y" }}</td>
+                                    <td>${{ invoice.amount }}</td>
+                                    <td>
+                                        <span class="badge bg-success">Paid</span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ invoice.pdf_url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-download me-1"></i>PDF
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Change Plan Modal -->
+<div class="modal fade" id="changePlanModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Subscription Plan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{% url 'change_plan' %}" method="post">
+                    {% csrf_token %}
+                    <!-- Plan selection options here -->
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Subscription Modal -->
+<div class="modal fade" id="cancelSubscriptionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancel Subscription</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel your subscription? You'll lose access to all pro features at the end of your billing period.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep It</button>
+                <form action="{% url 'cancel_subscription' %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Yes, Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
