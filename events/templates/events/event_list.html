@@ -5,26 +5,83 @@
 
 {% block content %}
 <div class="container py-4 py-lg-5">
-    <!-- Header Section - Responsive Layout -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
-        <h1 class="h2 mb-0"><i class="fas fa-calendar-week me-2"></i> Events</h1>
-        <div class="w-100 w-md-auto">
-            <div class="input-group">
-                <input type="text" class="form-control" placeholder="Search events...">
-                <button class="btn btn-outline-primary d-flex align-items-center">
-                    <i class="fas fa-search"></i>
-                    <span class="d-none d-md-inline ms-2">Search</span>
-                </button>
-            </div>
+    <!-- Search and Filter Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <!-- Search Input -->
+                <div class="col-12 col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" 
+                               name="search" 
+                               class="form-control" 
+                               placeholder="Search events..."
+                               value="{{ search_query }}">
+                    </div>
+                </div>
+                
+                <!-- Category Filter -->
+                <div class="col-12 col-md-4">
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                            <option value="{{ category.slug }}" 
+                                    {% if selected_category == category.slug %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="col-12 col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-2"></i>Filter
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
-    
-    <!-- Events Grid - Responsive Columns -->
+
+    <!-- Active Filters Section -->
+    {% if search_query or selected_category %}
+    <div class="mb-4">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="text-muted">Active filters:</span>
+            {% if search_query %}
+            <span class="badge bg-primary d-flex align-items-center">
+                Search: {{ search_query }}
+                <a href="?{% if selected_category %}category={{ selected_category }}{% endif %}" 
+                   class="ms-2 text-white text-decoration-none">
+                    <i class="fas fa-times"></i>
+                </a>
+            </span>
+            {% endif %}
+            {% if selected_category %}
+            <span class="badge bg-secondary d-flex align-items-center">
+                Category: {{ selected_category|title }}
+                <a href="?{% if search_query %}search={{ search_query }}{% endif %}" 
+                   class="ms-2 text-white text-decoration-none">
+                    <i class="fas fa-times"></i>
+                </a>
+            </span>
+            {% endif %}
+            <a href="{% url 'event_list' %}" class="btn btn-sm btn-outline-secondary">
+                Clear All
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Events Grid -->
     <div class="row g-3 g-md-4">
         {% for event in events %}
             <div class="col-12 col-sm-6 col-lg-4">
                 <div class="card h-100 shadow-sm hover-shadow transition-all">
-                    <!-- Event Image - Responsive Height -->
+                    <!-- Event Image -->
                     {% if event.image %}
                         <img src="{{ event.image.url }}" 
                              class="card-img-top" 
@@ -46,6 +103,13 @@
                             {% else %}
                                 <span class="badge bg-success flex-shrink-0">Available</span>
                             {% endif %}
+                        </div>
+
+                        <!-- Category Badge -->
+                        <div class="mb-2">
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-tag me-1"></i>{{ event.category.name }}
+                            </span>
                         </div>
                         
                         <!-- Event Description -->
@@ -103,16 +167,23 @@
                 </div>
             </div>
         {% empty %}
-            <!-- Empty State - Responsive Padding -->
+            <!-- Empty State -->
             <div class="col-12">
                 <div class="card shadow-sm">
-                    <div class="card-body text-center py-4 py-md-5">
-                        <i class="fas fa-calendar-alt fa-4x text-muted mb-3"></i>
-                        <h3 class="h4 text-muted">No Events Available</h3>
-                        <p class="text-muted mb-4">Check back later for upcoming events!</p>
-                        <a href="{% url 'home' %}" class="btn btn-primary">
-                            <i class="fas fa-home me-1"></i> Return Home
-                        </a>
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                        <h3 class="h4 text-muted">No Events Found</h3>
+                        {% if search_query or selected_category %}
+                            <p class="text-muted mb-4">Try adjusting your search criteria</p>
+                            <a href="{% url 'event_list' %}" class="btn btn-primary">
+                                <i class="fas fa-times me-1"></i> Clear Filters
+                            </a>
+                        {% else %}
+                            <p class="text-muted mb-4">Check back later for upcoming events!</p>
+                            <a href="{% url 'home' %}" class="btn btn-primary">
+                                <i class="fas fa-home me-1"></i> Return Home
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>

@@ -7,9 +7,10 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from .models import Event, Ticket
+from .models import Category, Event, Ticket
 from .forms import EventForm, TicketPurchaseForm
 import stripe
+from django.db.models import Q
 from PIL import Image, ImageDraw, ImageFont
 import io
 from django.core.mail import EmailMessage
@@ -26,7 +27,26 @@ def home(request):
 
 def event_list(request):
     events = Event.objects.filter(is_active=True, date__gte=timezone.now())
-    return render(request, 'events/event_list.html', {'events': events})
+    categories = Category.objects.all()
+
+    search_query = request.GET.get('search', '')
+    category_slug = request.GET.get('category', '')
+    if search_query:
+        events = events.filter(
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(location__icontains=search_query)
+        )
+
+    if category_slug:
+        events = events.filter(category__slug=category_slug)
+
+    return render(request, 'events/event_list.html', {'events': events, 'categories': categories})
+
+def category_events(request, slug):
+    category = get_object_or_404(Category, slug=slug)
+    events = Event.objects.filter(category=category)
+    return render(request, 'events/category_events.html', {'category': category, 'events': events})
 
 def event_detail(request, pk):
     event = get_object_or_404(Event, pk=pk)

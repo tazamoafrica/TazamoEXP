@@ -24,9 +24,24 @@ class User(AbstractUser):
     def has_active_subscription(self):
         return hasattr(self, 'subscription') and self.subscription.is_active()
 
+class Category(models.Model):
+    name = models.CharField(max_length=100,null=False, unique=True)
+    description = models.TextField(blank=True)
+    slug = models.SlugField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = 'Categories'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+    def get_absolute_url(self):
+        return reverse('category_detail', kwargs={'slug': self.slug})
 
 class Event(models.Model):
     organizer = models.ForeignKey(User, on_delete=models.CASCADE,related_name='events')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE,null=True, related_name='events')
     title = models.CharField(max_length=150)
     description = models.TextField()
     image = models.ImageField(upload_to='event_images/',blank=True,null=True)

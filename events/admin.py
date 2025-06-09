@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Event, Ticket
+from .models import Event, Ticket,Category
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
@@ -14,3 +14,10 @@ class TicketAdmin(admin.ModelAdmin):
     list_filter = ['purchased_at', 'event']
     search_fields = ['buyer_name', 'buyer_email', 'ticket_code']
     readonly_fields = ['ticket_code', 'purchased_at']
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+        list_display = ['name', 'description']
+        search_fields = ['name', 'description']
+        list_filter = ['name']
+        prepopulated_fields = {'slug': ('name',)}

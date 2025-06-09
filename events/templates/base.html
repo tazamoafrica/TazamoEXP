@@ -27,11 +27,72 @@
         }
 
         /* Navigation Styles */
-        .navbar-brand {
-            font-weight: bold;
-            font-size: 1.5rem;
-            margin-right: auto;
-        }
+        /* Kenyan Flag Glitter Effect */
+@keyframes kenyanGlitter {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.kenya-glitter {
+    background: linear-gradient(
+        300deg,
+        #000000 0%,   /* Black */
+        #ff0000 15%,  /* Red */
+        #ffffff 30%, /* White */
+rgb(190, 211, 190) 45%  /* Green */
+    );
+    background-size: 140% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: kenyanGlitter 5s ease infinite;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-right: auto;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Add this to your existing <style> section */
+@keyframes spinGlitter {
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+    50% {
+        transform: rotate(180deg) scale(1.2);
+    }
+    100% {
+        transform: rotate(360deg) scale(1);
+    }
+}
+
+.navbar-brand .fas {
+    color: rgb(31, 25, 26);
+    text-shadow: 0 0 5px rgba(255,255,255,0.5);
+    animation: iconGlitter 2s ease-in-out infinite,
+               spinGlitter 4s ease-in-out 2s infinite;
+    display: inline-block;
+}
+
+/* Update existing iconGlitter animation */
+@keyframes iconGlitter {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
 
         .navbar-dark {
             background: var(--primary-gradient) !important;
@@ -203,8 +264,9 @@
             </button>
 
             <!-- Brand Logo -->
-            <a class="navbar-brand" href="{% url 'home' %}">
-                <i class="fas fa-ticket-alt me-2"></i>TazamoEXP
+            <a class="navbar-brand glitter-text" href="{% url 'home' %}">
+                <i class="fas fa-ticket-alt me-2"></i>
+                <span class="kenya-glitter">TazamoEXP</span>
             </a>
 
             <!-- Desktop Navigation -->
@@ -249,74 +311,74 @@
                                 <li><hr class="dropdown-divider"></li>
 
                                <!-- Pro Features Section -->
-<li class="dropdown-submenu">
-    <a class="dropdown-item dropdown-toggle d-flex justify-content-between align-items-center" href="#" role="button">
-        <span>
-            <i class="fas fa-crown me-2 text-warning"></i>TazamoXM
-        </span>
+                                <li class="dropdown-submenu">
+                                    <a class="dropdown-item dropdown-toggle d-flex justify-content-between align-items-center" href="#" role="button">
+                                        <span>
+                                            <i class="fas fa-crown me-2 text-warning"></i>TazamoXM
+                                        </span>
 
-        {% if not user.is_pro %}
-            <span class="badge bg-warning text-dark ms-2">Upgrade</span>
-        {% endif %}
-    </a>
-    <ul class="dropdown-menu dropdown-menu-end p-3" style="width: 300px;">
-        {% if not user.is_pro %}
+                                        {% if not user.is_pro %}
+                                            <span class="badge bg-warning text-dark ms-2">Upgrade</span>
+                                        {% endif %}
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end p-3" style="width: 300px;">
+                                        {% if not user.is_pro %}
 
-            <li class="text-center mb-3">
-                <h6 class="mb-1">Upgrade to Pro</h6>
-                <small class="text-muted">Choose your perfect plan</small>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-                <a class="dropdown-item rounded mb-2" href="{% url 'subscribe' plan='daily' %}">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-calendar-day me-2 text-primary"></i>
-                            <strong>Daily Plan</strong>
-                            <div class="small text-muted">Perfect for quick access</div>
-                        </div>
-                        <span class="badge bg-primary">$5/day</span>
-                    </div>
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item rounded mb-2 pro-badge" href="{% url 'subscribe' plan='monthly' %}">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-calendar-alt me-2 text-success"></i>
-                            <strong>Monthly Plan</strong>
-                            <div class="small text-muted">Most popular choice</div>
-                        </div>
-                        <span class="badge bg-success">$49/mo</span>
-                    </div>
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item rounded" href="{% url 'subscribe' plan='yearly' %}">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-calendar-check me-2 text-danger"></i>
-                            <strong>Yearly Plan</strong>
-                            <div class="small text-muted">Best value (Save 32%)</div>
-                        </div>
-                        <span class="badge bg-danger">$399/yr</span>
-                    </div>
-                </a>
-            </li>
-        {% else %}
-            <li>
-                <a class="dropdown-item rounded mb-2" href="{% url 'pro_features' %}">
-                    <i class="fas fa-star me-2 text-warning"></i>Pro Features
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item rounded" href="{% url 'subscription_settings' %}">
-                    <i class="fas fa-cog me-2"></i>Subscription Settings
-                </a>
-            </li>
-        {% endif %}
-    </ul>
-</li>
+                                            <li class="text-center mb-3">
+                                                <h6 class="mb-1">Upgrade to Pro</h6>
+                                                <small class="text-muted">Choose your perfect plan</small>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <a class="dropdown-item rounded mb-2" href="{% url 'subscribe' plan='daily' %}">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <i class="fas fa-calendar-day me-2 text-primary"></i>
+                                                            <strong>Daily Plan</strong>
+                                                            <div class="small text-muted">Perfect for quick access</div>
+                                                        </div>
+                                                        <span class="badge bg-primary">$5/day</span>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item rounded mb-2 pro-badge" href="{% url 'subscribe' plan='monthly' %}">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <i class="fas fa-calendar-alt me-2 text-success"></i>
+                                                            <strong>Monthly Plan</strong>
+                                                            <div class="small text-muted">Most popular choice</div>
+                                                        </div>
+                                                        <span class="badge bg-success">$49/mo</span>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item rounded" href="{% url 'subscribe' plan='yearly' %}">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <i class="fas fa-calendar-check me-2 text-danger"></i>
+                                                            <strong>Yearly Plan</strong>
+                                                            <div class="small text-muted">Best value (Save 32%)</div>
+                                                        </div>
+                                                        <span class="badge bg-danger">$399/yr</span>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li>
+                                                <a class="dropdown-item rounded mb-2" href="{% url 'pro_features' %}">
+                                                    <i class="fas fa-star me-2 text-warning"></i>Pro Features
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item rounded" href="{% url 'subscription_settings' %}">
+                                                    <i class="fas fa-cog me-2"></i>Subscription Settings
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item" href="{% url 'logout' %}">

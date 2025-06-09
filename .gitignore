@@ -50,5 +50,5 @@ db.sqlite3-journal
 .vscode/
 
 # OS generated files #
-.DS_Store
+.DS_Sto
 Thumbs.db
