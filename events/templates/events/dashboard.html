@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
+{% load math_filters %}
 
 {% block title %}Dashboard - Event Management{% endblock %}
 
@@ -161,6 +162,13 @@
                                                title="Edit Event">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            <a href="{% url 'delete_event' event.pk %}" 
+                                               class="btn btn-sm btn-outline-secondary"
+                                               data-bs-toggle="tooltip"
+                                               title="Delete Event">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
                                         </div>
                                     </td>
                                 </tr>

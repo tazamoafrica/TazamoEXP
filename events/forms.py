@@ -1,17 +1,32 @@
 from django import forms
-from .models import Event
+from .models import Event,Category
 
 class EventForm(forms.ModelForm):
+    category = forms.ModelChoiceField(
+        queryset=Category.objects.all(),
+        empty_label="Select Category",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk and self.instance.date:
+            self.fields['date'].widget.attrs['value'] = self.instance.date.strftime('%Y-%m-%dT%H:%M')
+
     class Meta:
         model = Event
-        fields = ['title', 'description', 'image', 'date', 'location', 'ticket_price', 'total_tickets']
+        fields = ['title', 'description', 'category', 'image', 'date', 'location', 'ticket_price', 'total_tickets']
         widgets = {
-            'date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'description': forms.Textarea(attrs={'rows': 4}),
+            'date': forms.DateTimeInput(attrs={
+                'type': 'datetime-local',
+                'class': 'form-control'
+            }),
+            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'location': forms.TextInput(attrs={'class': 'form-control'}),
             'ticket_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'total_tickets': forms.NumberInput(attrs={'class': 'form-control'}),
+            'image': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
 class TicketPurchaseForm(forms.Form):

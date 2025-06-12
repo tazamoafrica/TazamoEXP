@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="card-title text-danger text-center mb-4">Confirm Deletion</h2>
+          <p class="text-center">Are you sure you want to delete the event <strong>"{{ event.title }}"</strong>?</p>
+          
+          <form method="post" class="d-flex flex-column align-items-center">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger mb-2 w-100">Yes, delete</button>
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary w-100">Cancel</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

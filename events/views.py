@@ -88,12 +88,31 @@ def edit_event(request, pk):
     if request.method == 'POST':
         form = EventForm(request.POST, request.FILES, instance=event)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Event updated successfully!')
-            return redirect('dashboard')
+            try:
+                form.save()
+                messages.success(request, 'Event updated successfully!')
+                return redirect('dashboard')
+            except Exception as e:
+                messages.error(request, f'Error saving event: {str(e)}')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+            print("Form errors:", form.errors)
     else:
         form = EventForm(instance=event)
-    return render(request, 'events/edit_event.html', {'form': form, 'event': event})
+    
+    return render(request, 'events/edit_event.html', {
+        'form': form, 
+        'event': event
+    })
+@login_required
+def delete_event(request, pk):
+    event = get_object_or_404(Event, pk=pk, organizer=request.user)
+    if request.method == 'POST':
+        event.delete()
+        messages.success(request, 'Event deleted successfully.')
+        return redirect('dashboard')
+    return render(request, 'events/delete.html', {'event': event})
+
 
 def checkout(request, pk):
     event = get_object_or_404(Event, pk=pk)
