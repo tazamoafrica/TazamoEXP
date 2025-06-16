@@ -8,7 +8,7 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card shadow">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header text-black" style="background-color: #f8f9fa;">
                     <h4 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Complete Your Purchase</h4>
                 </div>
                 <div class="card-body p-4">
@@ -149,7 +149,6 @@
 {% if stripe_publishable_key %}
 <script src="https://js.stripe.com/v3/"></script>
 <script>
-    // Initialize Stripe
     const stripe = Stripe('{{ stripe_publishable_key }}');
     const elements = stripe.elements();
     const cardElement = elements.create('card');

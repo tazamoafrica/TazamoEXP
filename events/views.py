@@ -22,8 +22,14 @@ from twilio.rest import Client
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 def home(request):
-    events = Event.objects.filter(is_active=True, date__gte=timezone.now())[:6]
-    return render(request, 'events/home.html', {'events': events})
+    events = Event.objects.filter(
+        is_active=True, 
+        date__gte=timezone.now()
+    ).prefetch_related('ticket_categories').order_by('date')[:6]
+    
+    return render(request, 'events/home.html', {
+        'events': events
+    })
 
 def event_list(request):
     events = Event.objects.filter(is_active=True, date__gte=timezone.now())
@@ -50,8 +56,13 @@ def category_events(request, slug):
 
 def event_detail(request, pk):
     event = get_object_or_404(Event, pk=pk)
+    selected_category = event.ticket_categories.filter(
+        available_tickets__gt=0
+    ).first()
     context = {
         'event': event,
+        'now': timezone.now(),
+        'selected_category': selected_category,
         'now': timezone.now(),
     }
     return render(request, 'events/event_detail.html', context)
@@ -166,7 +177,6 @@ def delete_event(request, pk):
     return render(request, 'events/delete.html', {'event': event})
 
 
-@login_required
 def checkout(request, pk):
     event = get_object_or_404(Event, pk=pk)
     category_id = request.GET.get('category')
@@ -429,13 +439,7 @@ def subscription_settings(request):
     
     return render(request, 'subscription/settings.html', context)
 
-import stripe
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
-
 @require_POST
-@login_required
 def create_payment_intent(request, pk):
     try:
         event = get_object_or_404(Event, pk=pk)
