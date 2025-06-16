@@ -7,8 +7,8 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from .models import Category, Event, Ticket
-from .forms import EventForm, TicketPurchaseForm
+from .models import Category, Event, Ticket, TicketCategory
+from .forms import EventForm, TicketCategoryFormSet, TicketPurchaseForm
 import stripe
 from django.db.models import Q
 from PIL import Image, ImageDraw, ImageFont
@@ -50,7 +50,11 @@ def category_events(request, slug):
 
 def event_detail(request, pk):
     event = get_object_or_404(Event, pk=pk)
-    return render(request, 'events/event_detail.html', {'event': event})
+    context = {
+        'event': event,
+        'now': timezone.now(),
+    }
+    return render(request, 'events/event_detail.html', context)
 
 @login_required
 def dashboard(request):
@@ -71,37 +75,85 @@ def dashboard(request):
 def create_event(request):
     if request.method == 'POST':
         form = EventForm(request.POST, request.FILES)
-        if form.is_valid():
-            event = form.save(commit=False)
-            event.organizer = request.user
-            event.available_tickets = event.total_tickets
-            event.save()
-            messages.success(request, 'Event created successfully!')
-            return redirect('dashboard')
+        ticket_formset = TicketCategoryFormSet(request.POST)
+        
+        if form.is_valid() and ticket_formset.is_valid():
+            try:
+                # Create event with initial available_tickets value
+                event = form.save(commit=False)
+                event.organizer = request.user
+                event.available_tickets = 0  # Set initial value
+                event.save()
+                
+                # Save ticket categories
+                ticket_formset.instance = event
+                categories = ticket_formset.save()
+                
+                if not categories:
+                    messages.error(request, 'Please add at least one ticket category.')
+                    event.delete()
+                    return render(request, 'events/create_event.html', {
+                        'form': form,
+                        'ticket_formset': ticket_formset
+                    })
+                
+                # Update available tickets from categories
+                total_available = sum(tc.available_tickets for tc in categories)
+                event.available_tickets = total_available
+                event.total_tickets = total_available
+                event.save()
+                
+                messages.success(request, 'Event created successfully!')
+                return redirect('dashboard')
+                
+            except Exception as e:
+                messages.error(request, f'Error creating event: {str(e)}')
+                # Clean up if there was an error
+                if event.pk:
+                    event.delete()
+        else:
+            if form.errors:
+                messages.error(request, 'Please correct the errors in the event form.')
+            if ticket_formset.errors:
+                messages.error(request, 'Please correct the errors in the ticket categories.')
+            print("Form errors:", form.errors)
+            print("Formset errors:", ticket_formset.errors)
     else:
         form = EventForm()
-    return render(request, 'events/create_event.html', {'form': form})
+        ticket_formset = TicketCategoryFormSet()
+    
+    return render(request, 'events/create_event.html', {
+        'form': form,
+        'ticket_formset': ticket_formset
+    })
 
 @login_required
 def edit_event(request, pk):
     event = get_object_or_404(Event, pk=pk, organizer=request.user)
     if request.method == 'POST':
         form = EventForm(request.POST, request.FILES, instance=event)
-        if form.is_valid():
+        ticket_formset = TicketCategoryFormSet(request.POST, instance=event)
+        
+        if form.is_valid() and ticket_formset.is_valid():
             try:
                 form.save()
+                ticket_formset.save()
+                
+                # Update available tickets
+                event.available_tickets = sum(tc.available_tickets for tc in event.ticket_categories.all())
+                event.save()
+                
                 messages.success(request, 'Event updated successfully!')
                 return redirect('dashboard')
             except Exception as e:
                 messages.error(request, f'Error saving event: {str(e)}')
-        else:
-            messages.error(request, 'Please correct the errors below.')
-            print("Form errors:", form.errors)
     else:
         form = EventForm(instance=event)
+        ticket_formset = TicketCategoryFormSet(instance=event)
     
     return render(request, 'events/edit_event.html', {
-        'form': form, 
+        'form': form,
+        'ticket_formset': ticket_formset,
         'event': event
     })
 @login_required
@@ -114,42 +166,49 @@ def delete_event(request, pk):
     return render(request, 'events/delete.html', {'event': event})
 
 
+@login_required
 def checkout(request, pk):
     event = get_object_or_404(Event, pk=pk)
-    if request.method == 'POST':
-        form = TicketPurchaseForm(request.POST)
-        if form.is_valid() and event.available_tickets >= form.cleaned_data['quantity']:
-            
-            try:
-                intent = stripe.PaymentIntent.create(
-                    amount=int(event.ticket_price * form.cleaned_data['quantity'] * 100),
-                    currency='usd',
-                    metadata={
-                        'event_id': event.id,
-                        'buyer_name': form.cleaned_data['buyer_name'],
-                        'buyer_email': form.cleaned_data['buyer_email'],
-                        'quantity': form.cleaned_data['quantity'],
-                    }
-                )
-                
-                context = {
-                    'event': event,
-                    'form': form,
-                    'client_secret': intent.client_secret,
-                    'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
-                    'total_amount': event.ticket_price * form.cleaned_data['quantity'],
-                }
-                return render(request, 'events/checkout.html', context)
-            except Exception as e:
-                messages.error(request, f'Payment processing error: {str(e)}')
-    else:
-        form = TicketPurchaseForm()
+    category_id = request.GET.get('category')
     
-    return render(request, 'events/checkout.html', {
-        'event': event, 
+    if not category_id:
+        messages.error(request, 'Please select a ticket category.')
+        return redirect('event_detail', pk=event.pk)
+    
+    try:
+        selected_category = TicketCategory.objects.get(
+            id=category_id,
+            event=event,
+            available_tickets__gt=0
+        )
+    except TicketCategory.DoesNotExist:
+        messages.error(request, 'Selected ticket category is not available.')
+        return redirect('event_detail', pk=event.pk)
+    
+    initial_data = {
+        'ticket_category': selected_category,
+        'quantity': 1
+    }
+    
+    if request.user.is_authenticated:
+        initial_data.update({
+            'buyer_name': request.user.get_full_name(),
+            'buyer_email': request.user.email
+        })
+    
+    form = TicketPurchaseForm(
+        event, 
+        initial=initial_data
+    )
+    
+    context = {
+        'event': event,
+        'selected_category': selected_category,
         'form': form,
         'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
-    })
+    }
+    
+    return render(request, 'events/checkout.html', context)
 
 @csrf_exempt
 @require_POST
@@ -157,27 +216,32 @@ def payment_success(request):
     try:
         payload = json.loads(request.body)
         payment_intent_id = payload.get('payment_intent_id')
-        
-        
         intent = stripe.PaymentIntent.retrieve(payment_intent_id)
         
         if intent.status == 'succeeded':
-            
             event_id = intent.metadata.get('event_id')
+            ticket_category_id = intent.metadata.get('ticket_category_id')
             buyer_name = intent.metadata.get('buyer_name')
             buyer_email = intent.metadata.get('buyer_email')
             quantity = int(intent.metadata.get('quantity'))
             
             event = Event.objects.get(id=event_id)
+            ticket_category = TicketCategory.objects.get(id=ticket_category_id)
             
             ticket = Ticket.objects.create(
                 event=event,
+                ticket_category=ticket_category,
                 buyer_name=buyer_name,
                 buyer_email=buyer_email,
                 quantity=quantity,
+                unit_price=ticket_category.price,
                 total_amount=intent.amount / 100,
                 stripe_payment_intent_id=payment_intent_id
             )
+            
+            # Update available tickets
+            ticket_category.available_tickets -= quantity
+            ticket_category.save()
             
             event.available_tickets -= quantity
             event.save()
@@ -191,7 +255,6 @@ def payment_success(request):
     
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
-
 
 
 def generate_ticket_image(ticket):
@@ -214,11 +277,13 @@ def generate_ticket_image(ticket):
 
     # Draw ticket content
     draw.text((50, 50), ticket.event.title, fill='black', font=font_large)
-    draw.text((50, 120), f"Date: {ticket.event.date.strftime('%B %d, %Y at %I:%M %p')}", fill='black', font=font_medium)
-    draw.text((50, 170), f"Location: {ticket.event.location}", fill='black', font=font_medium)
-    draw.text((50, 220), f"Attendee: {ticket.buyer_name}", fill='black', font=font_medium)
-    draw.text((50, 270), f"Quantity: {ticket.quantity}", fill='black', font=font_medium)
-    draw.text((50, 320), f"Ticket Code: {ticket.ticket_code}", fill='black', font=font_large)
+    draw.text((50, 100), f"Category: {ticket.ticket_category.name}", fill='black', font=font_medium)
+    draw.text((50, 150), f"Date: {ticket.event.date.strftime('%B %d, %Y at %I:%M %p')}", fill='black', font=font_medium)
+    draw.text((50, 200), f"Location: {ticket.event.location}", fill='black', font=font_medium)
+    draw.text((50, 250), f"Attendee: {ticket.buyer_name}", fill='black', font=font_medium)
+    draw.text((50, 300), f"Quantity: {ticket.quantity}", fill='black', font=font_medium)
+    draw.text((50, 350), f"Price per ticket: ${ticket.unit_price}", fill='black', font=font_medium)
+    draw.text((50, 400), f"Ticket Code: {ticket.ticket_code}", fill='black', font=font_large)
     
     # Save image to bytes buffer
     image_buffer = io.BytesIO()
@@ -237,11 +302,14 @@ def send_ticket_email(ticket):
     
     Event Details:
     - Event: {ticket.event.title}
+    - Category: {ticket.ticket_category.name}
     - Date: {ticket.event.date.strftime('%B %d, %Y at %I:%M %p')}
     - Location: {ticket.event.location}
     - Quantity: {ticket.quantity}
+    - Price per ticket: ${ticket.unit_price}
     - Total Paid: ${ticket.total_amount}
     - Ticket Code: {ticket.ticket_code}
+    
     
     Please find your ticket attached to this email.
     Present this ticket (either digital or printed) at the event entrance.
@@ -360,3 +428,64 @@ def subscription_settings(request):
         context['billing_history'] = invoices.data
     
     return render(request, 'subscription/settings.html', context)
+
+import stripe
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+
+@require_POST
+@login_required
+def create_payment_intent(request, pk):
+    try:
+        event = get_object_or_404(Event, pk=pk)
+        category_id = request.POST.get('category_id')
+        quantity = int(request.POST.get('quantity', 1))
+        
+        category = get_object_or_404(TicketCategory, 
+            id=category_id,
+            event=event,
+            available_tickets__gt=0
+        )
+        
+        # Calculate amount in cents
+        amount = int(category.price * quantity * 100)
+        
+        # Create payment intent
+        intent = stripe.PaymentIntent.create(
+            amount=amount,
+            currency='kes',  # Kenyan Shilling
+            metadata={
+                'event_id': event.id,
+                'category_id': category.id,
+                'quantity': quantity,
+                'buyer_name': request.POST.get('buyer_name'),
+                'buyer_email': request.POST.get('buyer_email'),
+                'buyer_phone': request.POST.get('buyer_phone', ''),
+            }
+        )
+        
+        return JsonResponse({
+            'client_secret': intent.client_secret
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'error': str(e)
+        }, status=400)
+    
+def ticket_confirmation(request, payment_intent):
+    try:
+        # Retrieve the payment intent from Stripe
+        intent = stripe.PaymentIntent.retrieve(payment_intent)
+        
+        # Get or create the ticket
+        ticket = get_object_or_404(Ticket, stripe_payment_intent_id=payment_intent)
+        
+        return render(request, 'events/ticket_confirmation.html', {
+            'ticket': ticket,
+            'payment': intent
+        })
+    except Exception as e:
+        messages.error(request, 'Error retrieving ticket information.')
+        return redirect('dashboard')

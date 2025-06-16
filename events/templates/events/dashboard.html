@@ -5,8 +5,8 @@
 {% block title %}Dashboard - Event Management{% endblock %}
 
 {% block content %}
-<div class="container py-4 py-lg-5">
-    <!-- Header Section - Responsive Layout -->
+<div class="container py-4 py-lg-5" style="margin-top: 80px;">
+    <!-- Header Section -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
         <h1 class="h2 mb-0">
             <i class="fas fa-tachometer-alt me-2"></i>Event Organizer Dashboard
@@ -17,7 +17,7 @@
         </a>
     </div>
     
-    <!-- Stats Cards - Grid Layout -->
+    <!-- Stats Cards -->
     <div class="row g-3 g-xl-4 mb-4">
         <!-- Total Events Card -->
         <div class="col-6 col-md-3">
@@ -40,7 +40,7 @@
                         <i class="fas fa-ticket-alt fa-2x text-success"></i>
                     </div>
                     <h3 class="card-title h4 mb-1">{{ total_tickets_sold }}</h3>
-                    <p class="card-text text-muted small mb-0">Tickets Sold</p>
+                    <p class="card-text text-muted small mb-0">Total Tickets Sold</p>
                 </div>
             </div>
         </div>
@@ -58,7 +58,7 @@
             </div>
         </div>
         
-        <!-- Average Tickets Card -->
+        <!-- Average Revenue Card -->
         <div class="col-6 col-md-3">
             <div class="card h-100 shadow-sm">
                 <div class="card-body text-center p-3">
@@ -66,19 +66,19 @@
                         <i class="fas fa-chart-line fa-2x text-info"></i>
                     </div>
                     <h3 class="card-title h4 mb-1">
-                        {% if total_events > 0 %}
-                            {{ total_tickets_sold|div:total_events|floatformat:1 }}
+                        Ksh {% if total_events > 0 %}
+                            {{ total_revenue|div:total_events|floatformat:2 }}
                         {% else %}
                             0
                         {% endif %}
                     </h3>
-                    <p class="card-text text-muted small mb-0">Avg. Tickets/Event</p>
+                    <p class="card-text text-muted small mb-0">Avg. Revenue/Event</p>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Events Table Section -->
+    <!-- Events Table -->
     <div class="card shadow-sm">
         <div class="card-header bg-white py-3">
             <h5 class="mb-0"><i class="fas fa-list me-2"></i>Your Events</h5>
@@ -91,7 +91,7 @@
                             <tr>
                                 <th class="py-3">Event</th>
                                 <th class="py-3 d-none d-md-table-cell">Date</th>
-                                <th class="py-3">Price</th>
+                                <th class="py-3">Price Range</th>
                                 <th class="py-3 d-none d-lg-table-cell">Tickets</th>
                                 <th class="py-3 d-none d-xl-table-cell">Revenue</th>
                                 <th class="py-3">Status</th>
@@ -124,18 +124,45 @@
                                         {{ event.date|date:"M d, Y" }}
                                     </td>
                                     <td class="align-middle">
-                                        Ksh {{ event.ticket_price }}
+                                        {% if event.ticket_categories.exists %}
+                                            {% with lowest=event.get_lowest_price highest=event.get_highest_price %}
+                                                {% if lowest == highest %}
+                                                    Ksh {{ lowest|floatformat:2 }}
+                                                {% else %}
+                                                    Ksh {{ lowest|floatformat:2 }} - {{ highest|floatformat:2 }}
+                                                {% endif %}
+                                            {% endwith %}
+                                            <div class="mt-1">
+                                                {% for category in event.ticket_categories.all %}
+                                                    <small class="d-block text-muted">
+                                                        {{ category.name }}: Ksh {{ category.price|floatformat:2 }}
+                                                    </small>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">No prices set</span>
+                                        {% endif %}
                                     </td>
                                     <td class="d-none d-lg-table-cell align-middle">
-                                        <div>{{ event.tickets_sold }}/{{ event.total_tickets }}</div>
-                                        <div class="progress mt-1" style="height: 4px; width: 100px;">
+                                        <div class="mb-2">{{ event.tickets_sold }}/{{ event.total_tickets }}</div>
+                                        <div class="progress mb-2" style="height: 4px; width: 100px;">
                                             <div class="progress-bar bg-primary" 
                                                  style="width: {% widthratio event.tickets_sold event.total_tickets 100 %}%">
                                             </div>
                                         </div>
+                                        {% for category in event.ticket_categories.all %}
+                                            <small class="d-block text-muted">
+                                                {{ category.name }}: {{ category.tickets.count }}/{{ category.available_tickets }}
+                                            </small>
+                                        {% endfor %}
                                     </td>
                                     <td class="d-none d-xl-table-cell align-middle">
-                                        Ksh {{ event.tickets_sold|mul:event.ticket_price|floatformat:2 }}
+                                        <div>Ksh {{ event.get_total_revenue|floatformat:2 }}</div>
+                                        {% for category in event.ticket_categories.all %}
+                                            <small class="d-block text-muted">
+                                                {{ category.name }}: Ksh {{ category.get_revenue|floatformat:2 }}
+                                            </small>
+                                        {% endfor %}
                                     </td>
                                     <td class="align-middle">
                                         {% if event.is_past_event %}
@@ -163,12 +190,11 @@
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             <a href="{% url 'delete_event' event.pk %}" 
-                                               class="btn btn-sm btn-outline-secondary"
+                                               class="btn btn-sm btn-outline-danger"
                                                data-bs-toggle="tooltip"
                                                title="Delete Event">
                                                 <i class="fas fa-trash"></i>
                                             </a>
-                                        </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -198,10 +224,12 @@
 {% block scripts %}
 <script>
     // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
 </script>
 {% endblock %}
 {% endblock %}

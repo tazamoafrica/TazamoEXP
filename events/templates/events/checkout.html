@@ -4,7 +4,7 @@
 {% block title %}Checkout - {{ event.title }}{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-5" style="margin-top: 80px;">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card shadow">
@@ -33,9 +33,24 @@
                                 <i class="fas fa-map-marker-alt text-primary me-2"></i>
                                 <span>{{ event.location }}</span>
                             </div>
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-tag text-primary me-2"></i>
-                                <span>Ksh {{ event.ticket_price }} per ticket</span>
+                        </div>
+                    </div>
+
+                    <!-- Selected Ticket Category -->
+                    <div class="card bg-light border-primary mb-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-ticket-alt me-2"></i>Selected Ticket Type
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5 class="mb-1">{{ selected_category.name }}</h5>
+                                    <p class="text-muted small mb-0">{{ selected_category.description }}</p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <div class="h4 mb-0">Ksh {{ selected_category.price }}</div>
+                                    <small class="text-muted">per ticket</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -43,35 +58,49 @@
                     <!-- Checkout Form -->
                     <form id="checkout-form" method="post" class="needs-validation" novalidate>
                         {% csrf_token %}
+                        <input type="hidden" name="category_id" value="{{ selected_category.id }}">
                         
                         <!-- Personal Information -->
-                        <h6 class="fw-bold mb-3"><i class="fas fa-user me-2"></i>Personal Information</h6>
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-user me-2"></i>Personal Information
+                        </h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label for="{{ form.buyer_name.id_for_label }}" class="form-label">Full Name</label>
                                 {{ form.buyer_name|addclass:"form-control" }}
+                                <div class="invalid-feedback">{{ form.buyer_name.errors }}</div>
                             </div>
                             <div class="col-md-6">
                                 <label for="{{ form.buyer_email.id_for_label }}" class="form-label">Email Address</label>
                                 {{ form.buyer_email|addclass:"form-control" }}
+                                <div class="invalid-feedback">{{ form.buyer_email.errors }}</div>
                             </div>
                             <div class="col-md-6">
                                 <label for="{{ form.buyer_phone.id_for_label }}" class="form-label">Phone Number (Optional)</label>
                                 {{ form.buyer_phone|addclass:"form-control" }}
+                                <div class="invalid-feedback">{{ form.buyer_phone.errors }}</div>
                             </div>
                             <div class="col-md-6">
                                 <label for="{{ form.quantity.id_for_label }}" class="form-label">Number of Tickets</label>
                                 {{ form.quantity|addclass:"form-control" }}
+                                <div class="form-text">Maximum: {{ selected_category.max_tickets_per_purchase }} tickets</div>
+                                <div class="invalid-feedback">{{ form.quantity.errors }}</div>
                             </div>
                         </div>
                         
                         <!-- Order Summary -->
                         <div class="card bg-light mb-4">
                             <div class="card-body">
-                                <h6 class="fw-bold mb-3"><i class="fas fa-receipt me-2"></i>Order Summary</h6>
+                                <h6 class="fw-bold mb-3">
+                                    <i class="fas fa-receipt me-2"></i>Order Summary
+                                </h6>
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span>Ticket Price:</span>
-                                    <span>Ksh {{ event.ticket_price }}</span>
+                                    <span>Ticket Type:</span>
+                                    <span>{{ selected_category.name }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Price per Ticket:</span>
+                                    <span>Ksh {{ selected_category.price }}</span>
                                 </div>
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>Quantity:</span>
@@ -80,13 +109,17 @@
                                 <hr>
                                 <div class="d-flex justify-content-between">
                                     <strong>Total Amount:</strong>
-                                    <strong class="text-primary" id="total-amount">Ksh {{ event.ticket_price }}</strong>
+                                    <strong class="text-primary" id="total-amount">
+                                        Ksh {{ selected_category.price }}
+                                    </strong>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Payment Section -->
-                        <h6 class="fw-bold mb-3"><i class="fas fa-credit-card me-2"></i>Payment Information</h6>
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-credit-card me-2"></i>Payment Information
+                        </h6>
                         <div class="mb-4">
                             <div id="card-element" class="form-control" style="height: 40px; padding: 10px;"></div>
                             <div id="card-errors" role="alert" class="text-danger mt-2 small"></div>
@@ -116,13 +149,13 @@
 {% if stripe_publishable_key %}
 <script src="https://js.stripe.com/v3/"></script>
 <script>
-    // ...existing Stripe initialization code...
+    // Initialize Stripe
     const stripe = Stripe('{{ stripe_publishable_key }}');
     const elements = stripe.elements();
-    
     const cardElement = elements.create('card');
     cardElement.mount('#card-element');
-    
+
+    // Handle card element errors
     cardElement.on('change', function(event) {
         const displayError = document.getElementById('card-errors');
         if (event.error) {
@@ -131,75 +164,85 @@
             displayError.textContent = '';
         }
     });
-    // Update the quantity display formatting
+
+    // Handle quantity changes
     document.getElementById('id_quantity').addEventListener('change', function() {
-        const quantity = parseInt(this.value);
-        const price = {{ event.ticket_price }};
-        const total = quantity * price;
+        const quantity = parseInt(this.value) || 1;
+        const maxTickets = {{ selected_category.max_tickets_per_purchase }};
+        const price = {{ selected_category.price }};
         
-        document.getElementById('quantity-display').textContent = quantity;
+        // Validate quantity
+        if (quantity > maxTickets) {
+            this.value = maxTickets;
+        } else if (quantity < 1) {
+            this.value = 1;
+        }
+        
+        const total = price * parseInt(this.value);
+        document.getElementById('quantity-display').textContent = this.value;
         document.getElementById('total-amount').textContent = `Ksh ${total.toFixed(2)}`;
     });
+
+    // Handle form submission
     const form = document.getElementById('checkout-form');
-        form.addEventListener('submit', async function(event) {
-            event.preventDefault();
+    form.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const submitButton = document.getElementById('submit-button');
+        const buttonText = document.getElementById('button-text');
+        const spinner = document.getElementById('spinner');
+        
+        // Disable submit button and show spinner
+        submitButton.disabled = true;
+        buttonText.textContent = 'Processing...';
+        spinner.style.display = 'inline-block';
+        
+        const formData = new FormData(form);
+        
+        try {
+            // Create payment intent
+            const response = await fetch('{% url "create_payment_intent" event.pk %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                }
+            });
             
-            const submitButton = document.getElementById('submit-button');
-            const buttonText = document.getElementById('button-text');
-            const spinner = document.getElementById('spinner');
-            
-            submitButton.disabled = true;
-            buttonText.textContent = 'Processing...';
-            spinner.style.display = 'inline-block';
-            
-            const formData = new FormData(form);
-            
-            try {
-                // Create payment intent
-                const response = await fetch('{% url "checkout" event.pk %}', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Confirm card payment
+                const {error, paymentIntent} = await stripe.confirmCardPayment(data.client_secret, {
+                    payment_method: {
+                        card: cardElement,
+                        billing_details: {
+                            name: formData.get('buyer_name'),
+                            email: formData.get('buyer_email'),
+                        }
                     }
                 });
                 
-                if (response.ok) {
-                    const data = await response.text();
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(data, 'text/html');
-                    const clientSecret = doc.querySelector('meta[name="client-secret"]');
-                    
-                    if (clientSecret) {
-                        const {error} = await stripe.confirmCardPayment(clientSecret.content, {
-                            payment_method: {
-                                card: cardElement,
-                                billing_details: {
-                                    name: formData.get('buyer_name'),
-                                    email: formData.get('buyer_email'),
-                                }
-                            }
-                        });
-                        
-                        if (error) {
-                            document.getElementById('card-errors').textContent = error.message;
-                            submitButton.disabled = false;
-                            buttonText.textContent = 'Complete Purchase';
-                            spinner.style.display = 'none';
-                        } else {
-                            // Payment succeeded
-                            window.location.href = '/ticket-confirmation/';
-                        }
-                    }
+                if (error) {
+                    document.getElementById('card-errors').textContent = error.message;
+                    submitButton.disabled = false;
+                    buttonText.textContent = 'Complete Purchase';
+                    spinner.style.display = 'none';
+                } else if (paymentIntent.status === 'succeeded') {
+                    // Payment successful - redirect to confirmation
+                    window.location.href = `{% url 'ticket_confirmation' 'INTENT_ID' %}`.replace('INTENT_ID', paymentIntent.id);
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('card-errors').textContent = 'An error occurred. Please try again.';
-                submitButton.disabled = false;
-                buttonText.textContent = 'Complete Purchase';
-                spinner.style.display = 'none';
+            } else {
+                throw new Error('Failed to create payment intent');
             }
-        });
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('card-errors').textContent = 'An error occurred. Please try again.';
+            submitButton.disabled = false;
+            buttonText.textContent = 'Complete Purchase';
+            spinner.style.display = 'none';
+        }
+    });
 </script>
 {% endif %}
 {% endblock %}

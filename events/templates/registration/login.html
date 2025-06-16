@@ -7,8 +7,8 @@
     <div class="row justify-content-center align-items-center min-vh-75">
         <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
             <div class="card border-0 shadow-lg">
-                <div class="card-header bg-primary text-white text-center py-4">
-                    <h4 class="mb-0"><i class="fas fa-user-lock me-2"></i>Organizer Login</h4>
+                <div class="card-header text-center py-4">
+                    <h4 class="mb-0" style="color: rgb(17, 8, 2);"><i class="fas fa-user-lock me-2"></i>Organizer Login</h4>
                 </div>
                 <div class="card-body p-4 p-md-5">
                     <form method="post" class="needs-validation" novalidate>
@@ -40,7 +40,7 @@
                             </div>
                         {% endif %}
                         
-                        <button type="submit" class="btn btn-primary w-100 py-2 mt-3">
+                        <button type="submit" class="btn btn-primary w-100 py-2 mt-4">
                             <i class="fas fa-sign-in-alt me-2"></i>Login
                         </button>
                     </form>
@@ -48,9 +48,9 @@
                     <div class="text-center mt-4">
                         <p class="text-muted mb-3">
                             <i class="fas fa-info-circle me-2"></i>
-                            Don't have an account? Contact admin to create an organizer account:
+                            Don't have an account? Contact admin:
                         </p>
-                        <a href="https://wa.me/+254111363870" class="btn btn-success">
+                        <a href="https://wa.me/+254111363870" class="btn btn-whatsapp">
                             <i class="fab fa-whatsapp me-2"></i>Chat with Admin
                         </a>
                     </div>
@@ -66,58 +66,106 @@
     }
     
     .card {
-        transition: transform 0.3s ease;
+        transition: all 0.3s ease;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        background: white;
+        margin-top: 60px;
     }
+    
     
     .card:hover {
         transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgb(255, 250, 250) !important;
     }
     
-    /* Custom form styling */
+    .card-header {
+        background:rgb(255, 254, 253) !important;
+        color: white;
+        border-radius: 15px 15px 0 0 !important;
+    }
+
+    /* Form styling */
     .form-control {
-        border-radius: 0.5rem;
+        border-radius: 10px;
         padding: 0.75rem 1rem;
-        width: 100%;
         font-size: 1rem;
-        height: 3rem;
+        height: 3.2rem;
+        border: 2px solid #e1e1e1;
+        transition: all 0.3s ease;
+        text-align: center; /* Center input text */
     }
-     .input-group {
-        width: 100%;
+   .form-control:focus {
+        box-shadow: 0 0 0 0.25rem rgba(255, 117, 24, 0.25);
+        border-color: #FF7518;
+    }
+    
+    .form-control:hover {
+        border-color: #FF7518;
     }
 
-    .btn-success {
-        background-color: #25d366;
-        border-color: #25d366;
-        padding: 0.5rem 1.5rem;
-        font-weight: 500;
-    }
-
-    .btn-success:hover {
-        background-color: #128c7e;
-        border-color: #128c7e;
-        transform: translateY(-2px);
+    /* Button styling */
+    .btn-primary {
+        background: #FF7518 !important;
+        border: none;
+        border-radius: 10px;
+        width: 50%;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
         transition: all 0.3s ease;
     }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 117, 24, 0.4);
+    }
 
-    .form-control:focus {
-        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
-        border-color: #667eea;
+    .input-group {
+        display: flex;
+        justify-content: center;
+        width: 100%;
     }
-     /* Input field hover effect */
-    .form-control:hover {
-        border-color: #667eea;
-    }
-    /* Label styling */
+
+    /* Label styling - centered */
     .form-label {
-        font-size: 1rem;
-        font-weight: 500;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #444;
         margin-bottom: 0.5rem;
+        text-align: center;
+        width: 100%;
+        display: block;
+    }
+    
+    .btn-whatsapp {
+        background-color: #25d366;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-whatsapp:hover {
+        background-color: #128c7e;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
+    }
+    
+    /* Alert styling */
+    .alert {
+        border-radius: 10px;
     }
     
     /* Responsive adjustments */
     @media (max-width: 768px) {
         .card-body {
             padding: 2rem !important;
+        }
+        
+        .form-control {
+            height: 3rem;
         }
     }
 </style>

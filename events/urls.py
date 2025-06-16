@@ -18,6 +18,9 @@ urlpatterns = [
     path('edit-event/<int:pk>/', views.edit_event, name='edit_event'),
     path('events/<int:pk>/delete/', views.delete_event, name='delete_event'),
 
+    path('create-payment-intent/<int:pk>/', views.create_payment_intent, name='create_payment_intent'),
+    path('ticket-confirmation/<str:payment_intent>/', views.ticket_confirmation, name='ticket_confirmation'),
+
     path('subscribe/<str:plan>/', views_subscription.subscribe, name='subscribe'),
     path('subscription/success/', views_subscription.subscription_success, name='subscription_success'),
     path('subscription/cancel/', views_subscription.subscription_cancel, name='subscription_cancel'),

@@ -4,7 +4,7 @@
 {% block title %}Create Event - Event Management{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-5" style="margin-top: 80px;">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card shadow">
@@ -15,6 +15,8 @@
                     <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                         {% csrf_token %}
                         
+                        <!-- Event Details Section -->
+                        <h5 class="mb-3">Event Details</h5>
                         <div class="mb-4">
                             <label for="{{ form.title.id_for_label }}" class="form-label fw-bold">Event Title</label>
                             {{ form.title|addclass:"form-control" }}
@@ -58,22 +60,67 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label for="{{ form.ticket_price.id_for_label }}" class="form-label fw-bold">Ticket Price (Ksh)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">Ksh</span>
-                                    {{ form.ticket_price|addclass:"form-control" }}
+
+                        <div class="mb-4">
+                            <label for="{{ form.total_tickets.id_for_label }}" class="form-label fw-bold">Total Tickets Available</label>
+                            <div class="input-group">
+                                {{ form.total_tickets|addclass:"form-control" }}
+                                <span class="input-group-text"><i class="fas fa-ticket-alt"></i></span>
+                            </div>
+                        </div>
+
+                        <!-- Ticket Categories Section -->
+                        <h5 class="mb-3 mt-4">Ticket Categories</h5>
+                        {{ ticket_formset.management_form }}
+                        <div id="ticket-categories">
+                            {% for ticket_form in ticket_formset %}
+                            <div class="ticket-category card mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">Ticket Category {{ forloop.counter }}</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Category Name</label>
+                                            {{ ticket_form.name|addclass:"form-control" }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Category Type</label>
+                                            {{ ticket_form.category_type|addclass:"form-control" }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Price (Ksh)</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">Ksh</span>
+                                                {{ ticket_form.price|addclass:"form-control" }}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Available Tickets</label>
+                                            {{ ticket_form.available_tickets|addclass:"form-control" }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Max Tickets Per Purchase</label>
+                                            {{ ticket_form.max_tickets_per_purchase|addclass:"form-control" }}
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <label class="form-label">Sales Start</label>
+                                            {{ ticket_form.sales_start|addclass:"form-control" }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Sales End</label>
+                                            {{ ticket_form.sales_end|addclass:"form-control" }}
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Description</label>
+                                            {{ ticket_form.description|addclass:"form-control" }}
+                                        </div>
+                                    </div>
+                                    {% if ticket_form.instance.pk %}
+                                    {{ ticket_form.DELETE }}
+                                    {% endif %}
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <label for="{{ form.total_tickets.id_for_label }}" class="form-label fw-bold">Total Tickets</label>
-                                <div class="input-group">
-                                    {{ form.total_tickets|addclass:"form-control" }}
-                                    <span class="input-group-text"><i class="fas fa-ticket-alt"></i></span>
-                                </div>
-                            </div>
+                            {% endfor %}
                         </div>
                         
                         <div class="d-flex justify-content-between mt-4">
@@ -90,4 +137,24 @@
         </div>
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+    // Initialize datetime pickers for sales start/end
+    document.addEventListener('DOMContentLoaded', function() {
+        const datetimeInputs = document.querySelectorAll('input[type="datetime-local"]');
+        datetimeInputs.forEach(input => {
+            // Set min date to current date/time
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            input.min = `${year}-${month}-${day}T${hours}:${minutes}`;
+        });
+    });
+</script>
+{% endblock %}
+
 {% endblock %}
