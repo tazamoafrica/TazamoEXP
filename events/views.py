@@ -147,8 +147,19 @@ def edit_event(request, pk):
         
         if form.is_valid() and ticket_formset.is_valid():
             try:
-                form.save()
-                ticket_formset.save()
+                # Save the event
+                event = form.save()
+                
+                # Save ticket categories
+                categories = ticket_formset.save(commit=False)
+                for category in categories:
+                    if not category.max_tickets_per_purchase:
+                        category.max_tickets_per_purchase = 10  # Default value
+                    category.save()
+                
+                # Handle deletions
+                for obj in ticket_formset.deleted_objects:
+                    obj.delete()
                 
                 # Update available tickets
                 event.available_tickets = sum(tc.available_tickets for tc in event.ticket_categories.all())
@@ -167,6 +178,7 @@ def edit_event(request, pk):
         'ticket_formset': ticket_formset,
         'event': event
     })
+
 @login_required
 def delete_event(request, pk):
     event = get_object_or_404(Event, pk=pk, organizer=request.user)

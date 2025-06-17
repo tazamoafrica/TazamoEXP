@@ -15,6 +15,7 @@
                     <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                         {% csrf_token %}
 
+                        <!-- Error Messages -->
                         {% if form.non_field_errors %}
                             <div class="alert alert-danger">
                                 {{ form.non_field_errors }}
@@ -64,6 +65,7 @@
                             <div class="invalid-feedback">{{ form.description.errors }}</div>
                         </div>
                         
+                        <!-- Image Upload Section -->
                         <div class="mb-4">
                             <label for="{{ form.image.id_for_label }}" class="form-label fw-bold">Event Image</label>
                             {% if event.image %}
@@ -81,6 +83,7 @@
                             </div>
                         </div>
                         
+                        <!-- Date and Location Section -->
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label for="{{ form.date.id_for_label }}" class="form-label fw-bold">Date & Time</label>
@@ -98,6 +101,7 @@
                             </div>
                         </div>
 
+                        <!-- Total Tickets Section -->
                         <div class="mb-4">
                             <label for="{{ form.total_tickets.id_for_label }}" class="form-label fw-bold">Total Tickets</label>
                             <div class="input-group">
@@ -151,6 +155,19 @@
                                             </div>
                                             {% endif %}
                                         </div>
+                                        <!-- Max Tickets Per Purchase Field -->
+                                        <div class="col-md-6">
+                                            <label class="form-label">Max Tickets Per Purchase</label>
+                                            <div class="input-group">
+                                                {{ ticket_form.max_tickets_per_purchase|addclass:"form-control" }}
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-ticket-alt"></i>
+                                                </span>
+                                            </div>
+                                            <div class="form-text text-muted">
+                                                Maximum tickets one person can buy
+                                            </div>
+                                        </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Sales Start</label>
                                             {{ ticket_form.sales_start|addclass:"form-control" }}
@@ -170,6 +187,7 @@
                             {% endfor %}
                         </div>
                         
+                        <!-- Form Actions -->
                         <div class="d-flex justify-content-between mt-4">
                             <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
                                 <i class="fas fa-arrow-left me-1"></i> Cancel
@@ -200,9 +218,10 @@ document.addEventListener('DOMContentLoaded', function() {
         input.min = `${year}-${month}-${day}T${hours}:${minutes}`;
     });
 
-    // Validate total tickets matches sum of category tickets
+    // Form validation
     const form = document.querySelector('form');
     form.addEventListener('submit', function(e) {
+        // Validate total tickets
         const totalTickets = parseInt(document.querySelector('#id_total_tickets').value) || 0;
         let categoryTotal = 0;
         document.querySelectorAll('[id$="-available_tickets"]').forEach(input => {
@@ -212,6 +231,31 @@ document.addEventListener('DOMContentLoaded', function() {
         if (totalTickets !== categoryTotal) {
             e.preventDefault();
             alert('The sum of available tickets across all categories must equal the total tickets.');
+            return;
+        }
+
+        // Validate max tickets per purchase
+        let hasError = false;
+        document.querySelectorAll('[id$="-max_tickets_per_purchase"]').forEach(input => {
+            const maxTickets = parseInt(input.value) || 0;
+            const availableTickets = parseInt(
+                input.closest('.ticket-category')
+                    .querySelector('[id$="-available_tickets"]').value
+            ) || 0;
+
+            if (maxTickets <= 0) {
+                e.preventDefault();
+                hasError = true;
+                alert('Maximum tickets per purchase must be greater than 0');
+            } else if (maxTickets > availableTickets) {
+                e.preventDefault();
+                hasError = true;
+                alert('Maximum tickets per purchase cannot exceed available tickets');
+            }
+        });
+
+        if (hasError) {
+            e.preventDefault();
         }
     });
 });
